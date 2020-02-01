@@ -2,12 +2,13 @@ const express = require("express");
 const app = express();
 const port = 4000;
 const bodyParser = require("body-parser");
+require("dotenv").config();
 
 var mysql = require("mysql");
 var connection = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "199314edwin",
+  password: process.env.MYSQL_PASSWORD, //THIS IS YOUR SQL PASSWORD
   database: "gofoodapp"
 });
 
@@ -30,19 +31,34 @@ app.use(express.json());
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// SIGN UP
+/*============================================
+    CREATE ACCOUNT
+============================================*/
 app.post("/signup", function(req, res) {
-  res.json(req.body.signUpData);
   let signUpData = req.body.SignUpData;
   let { firstName, lastName, userName, email, password } = signUpData;
 
-  //   create accout
-  let createAccount = `INSERT INTO users (firstName, lastName, userName, email, password) VALUES ('${firstName}','${lastName}', '${userName}', '${email}', '${password}' );`;
-  connection.query(createAccount, (err, res) => {
-    if (err) throw err;
-    console.log(res);
+  //   QUERY
+  let createAccount = `INSERT INTO users 
+  (firstName, lastName, userName, email, password) 
+  VALUES ('${firstName}','${lastName}', '${userName}', '${email}', '${password}' );`;
+
+  //   CREATE
+  connection.query(createAccount, (err, response) => {
+    if (err) {
+      if (err.code == "ER_DUP_ENTRY") {
+        console.log(err);
+        res.send({ success: false, message: "user name or email taken" });
+      }
+      console.log(err.code);
+    }
   });
 });
+
+// connection.query("SELECT * FROM users;", (err, res) => {
+//   if (err) throw err;
+//   console.log(res);
+// });
 
 // EXPRESS LISTENERS
 app.listen(port, () => {
